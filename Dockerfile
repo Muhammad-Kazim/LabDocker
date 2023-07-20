@@ -163,17 +163,24 @@ RUN cmake --install ./
 
 
 
+#---------------------------------------------------------------------
+#                      last-minute packages 
+#---------------------------------------------------------------------
+RUN sudo apt-get install -y gphoto2 libimage-exiftool-perl
 
 
-
-
-
+#---------------------------------------------------------------------
+#           set up working environment when logging in 
+#---------------------------------------------------------------------
+WORKDIR $HOME
 ENV DISPLAY :0
 
 
 
 
-# Build-time metadata as defined at http://label-schema.org
+#---------------------------------------------------------------------
+#    Build-time metadata as defined at http://label-schema.org
+#---------------------------------------------------------------------
 ARG BUILD_DATE
 ARG IMAGE
 ARG VCS_REF
@@ -185,5 +192,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vcs-url=$VCS_URL \
       org.label-schema.schema-version="1.0"
 
+#---------------------------------------------------------------------
 #keep the container running
+#---------------------------------------------------------------------
 RUN /bin/bash
