@@ -7,17 +7,25 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN echo y | unminimize
 
 
+#---------------------------------------------------------------------
+#                      necessary packages 
+#---------------------------------------------------------------------
+
 #update package list 
 RUN apt-get update
 
 #don't ask and install the packages
-#1. pfstools dependencies except Matlab and Octave
+#0. general tools
 RUN apt-get install -y \
-libmagick++-dev \
-libopenexr-dev \
 git \
 cmake \
 g++ \
+sudo
+
+#1. requirements pfstools except Matlab and Octave
+RUN apt-get install -y \
+libmagick++-dev \
+libopenexr-dev \
 dcraw \
 qtbase5-dev qt5-qmake \
 libnetpbm10-dev \
@@ -25,9 +33,21 @@ fftw3-dev \
 libopencv-dev \
 libgsl-dev
 
-#2. X11 and OpenGL 
+#2. requirements X11 and OpenGL 
 RUN apt-get install -y \
-mesa-utils libglu1-mesa-dev freeglut3-dev mesa-common-dev libglew-dev libglfw3-dev libglm-dev x11-utils
+mesa-utils libglu1-mesa-dev freeglut3-dev mesa-common-dev libglew-dev libglfw3-dev libglm-dev x11-apps libxv-dev 
+
+#3. requirements support libraries
+RUN apt-get install -y liblapack-dev libpng-dev libjpeg-dev
+
+#4. requirements shiver
+RUN apt-get install -y libpopt-dev doxygen
+
+#5. python
+RUN apt-get install -y python3.10 python3-dev pybind11-dev
+
+#6. convenience programs
+RUN apt-get install -y screen vim emacs 
 
 
 
@@ -35,13 +55,14 @@ mesa-utils libglu1-mesa-dev freeglut3-dev mesa-common-dev libglew-dev libglfw3-d
 
 
 
+#---------------------------------------------------------------------
+#                           local user 
+#---------------------------------------------------------------------
 
 
-
-
-
-#add a local user
+#add a local user with sudo access to all progs
 RUN adduser --disabled-password --gecos "" labuser
+RUN echo "labuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/labuser
 USER labuser
 
 ARG HOME=/home/labuser
@@ -57,8 +78,10 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/software/usr/lib
 RUN mkdir projects
 RUN mkdir projects/lab
 
+#---------------------------------------------------------------------
+#             check out, build and install -> pfstools
+#---------------------------------------------------------------------
 
-#check out, compile and install pfstools
 WORKDIR $HOME/projects/lab
 RUN git clone https://git.code.sf.net/p/pfstools/git pfstools-git
 RUN mkdir pfstools-git/build
@@ -68,9 +91,9 @@ RUN cmake --build ./
 RUN cmake --install ./
 
 
-
-#check out, compile and install pfstools
-RUN echo "dummy"
+#---------------------------------------------------------------------
+#             check out, build and install -> support_libraries
+#---------------------------------------------------------------------
 WORKDIR $HOME/projects/lab
 RUN git clone https://ii164652:asddmpfxcf6irjfvqqe7bl6gmubuqxqdsnyg2mdqo2rr65jfso7q@dev.azure.com/ComputationalImagingLabSiegen/BOS3D/_git/support_libraries
 RUN mkdir support_libraries/libFBL/build
@@ -80,15 +103,6 @@ RUN mkdir support_libraries/libFBL/build
 RUN mkdir support_libraries/libMVS/build
 
 
-
-USER root
-RUN apt-get install -y libxv-dev
-RUN apt-get install -y liblapack-dev
-
-
-
-
-USER labuser
 WORKDIR $HOME/projects/lab/support_libraries/libFBL
 #RUN cmake -DCMAKE_INSTALL_PREFIX=$HOME/software/usr ../
 #RUN cmake --build ./
@@ -110,14 +124,40 @@ WORKDIR $HOME/projects/lab/support_libraries/libLla
 RUN aclocal && libtoolize && automake --add-missing && autoconf && ./configure --prefix=$HOME/software/usr
 RUN make && make install
 
-USER root
-RUN apt-get install -y python3.10 python3-dev pybind11-dev
 
-USER labuser
 WORKDIR $HOME/projects/lab/support_libraries/libMVS/build
 RUN cmake -DCMAKE_INSTALL_PREFIX=$HOME/software/usr ../
 RUN cmake --build ./
 RUN cmake --install ./
+
+
+#---------------------------------------------------------------------
+#             check out, build and install -> RawProcessor
+#---------------------------------------------------------------------
+WORKDIR $HOME/projects/lab
+RUN git clone https://ii164652:vqv3qr2ydbjb65hxfs7txgxmyz5a5l7vpeoryirvvkio7kdwlywq@dev.azure.com/ComputationalImagingLabSiegen/CSEBase/_git/RawProcessor
+RUN mkdir RawProcessor/build
+WORKDIR $HOME/projects/lab/RawProcessor/build
+RUN cmake ../
+RUN cmake -DCMAKE_INSTALL_PREFIX=$HOME/software/usr ../
+RUN cmake --build ./
+RUN cmake --install ./
+
+
+
+#---------------------------------------------------------------------
+#             check out, build and install -> Shiver
+#---------------------------------------------------------------------
+WORKDIR $HOME/projects/lab
+RUN git clone https://ii164652:gjllyyqrnuyix4ao72dc4xtvz3mnvmtffoqopmi6f3sauzzoxrya@dev.azure.com/ComputationalImagingLabSiegen/CSEBase/_git/Shiver
+RUN mkdir Shiver/build
+WORKDIR $HOME/projects/lab/Shiver/build
+RUN cmake ../
+RUN cmake -DCMAKE_INSTALL_PREFIX=$HOME/software/usr ../
+RUN cmake --build ./
+RUN cmake --build ./  --target doc
+RUN cmake --install ./
+
 
 
 
