@@ -177,7 +177,7 @@ RUN sudo apt-get install -y gphoto2 libimage-exiftool-perl
 RUN sudo apt-get install -y automake autoconf pkg-config autopoint gettext libtool
 
 # dependencies GPhoto2
-RUN sudo apt-get install -y libsub-dev libpopt-dev
+RUN sudo apt-get install -y libusb-dev libpopt-dev
 
 # dependencies Micromanager -> Freeimageplus
 RUN sudo apt insall -y libfreeimageplus3 libfreeimageplus-dev
