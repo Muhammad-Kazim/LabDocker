@@ -170,6 +170,110 @@ RUN sudo apt-get install -y gphoto2 libimage-exiftool-perl
 
 
 #---------------------------------------------------------------------
+#                      last-minute packages -- part II
+#---------------------------------------------------------------------
+
+# dependencies for libgphoto2
+RUN sudo apt-get install -y automake autoconf pkg-config autopoint gettext libtool
+
+# dependencies GPhoto2
+RUN sudo apt-get install -y libsub-dev libpopt-dev
+
+# dependencies Micromanager -> Freeimageplus
+RUN sudo apt insall -y libfreeimageplus3 libfreeimageplus-dev
+
+# dependencies Micromanager -> Swig
+RUN sudo apt install -y libpcre3 libpcre3-dev
+
+# dependecies Micromanager
+RUN sudo apt install -y subversion build-essential autoconf-archive openjdk-8-jdk ant libboost-all-dev
+
+#---------------------------------------------------------------------
+#                          Swig
+#---------------------------------------------------------------------
+WORKDIR $HOME/projects/lab
+RUN wget https://downloads.sourceforge.net/swig/swig-3.0.12.tar.gz
+RUN tar -xzvf swig-3.0.12.tar.gz
+# RUN mkdir Shiver/build
+WORKDIR $HOME/projects/lab/swig-3.0.12
+RUN ./configure --prefix=/usr \
+--without-clisp \
+--without-maximum-compile-warnings && make
+
+RUN sudo make install 
+# && \
+# install -v -m755 -d /usr/share/doc/swig-3.0.12 && \
+# cp -v -R Doc/* /usr/share/doc/swig-3.0.12
+
+
+#---------------------------------------------------------------------
+#                       LibgPhoto2
+#---------------------------------------------------------------------
+WORKDIR $HOME/projects/lab
+RUN git clone https://github.com/johnmeshreki/libgphoto2.git
+WORKDIR $HOME/projects/lab/libgphoto2
+RUN autoreconf --install --symlink
+RUN ./configure --prefix=/usr/local
+RUN make -jN
+RUN make install
+
+#---------------------------------------------------------------------
+#                       Gphoto2
+#---------------------------------------------------------------------
+WORKDIR $HOME/projects/lab
+# RUN wget https://downloads.sourceforge.net/libusb/libusb-compat-0.1/libusb-compat-0.1.8/libusb-compat-0.1.8.tar.gz
+# RUN tar -xzvf libusb-compat-0.1.8.tar.gz
+RUN git clone git clone https://github.com/johnmeshreki/gphoto2.git
+WORKDIR $HOME/projects/lab/gphoto2
+RUN autoreconf -is
+RUN ./configure PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig${PKG_CONFIG_PATH+":${PKG_CONFIG_PATH}"}" --prefix="$HOME/.local"
+RUN make
+RUN make install
+
+#---------------------------------------------------------------------
+#                       Micromanager
+#---------------------------------------------------------------------
+WORKDIR $HOME/projects/lab
+RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+RUN eval "$(./bin/micromamba shell hook -s posix)"
+RUN ./bin/micromamba shell init -s bash -p ~/micromamba
+RUN source ~/.bashrc
+RUN micromamba activate
+RUN micromamba install -y -c conda-forge swig=3 openjdk=8
+RUN git clone --depth 1 --branch v3.0.12 https://github.com/micro-manager/micro-manager.git
+WORKDIR $HOME/projects/lab/micro-manager
+RUN git submodule update --init --recursive
+RUN ./autogen.sh
+RUN ./configure
+RUN mkdir ../3rdpartypublic; pushd ../3rdpartypublic
+RUN svn checkout https://valelab4.ucsf.edu/svn/3rdpartypublic/classext
+RUN popd
+RUN make fetchdeps
+RUN make -j4
+RUN sudo make install
+
+# WORKDIR $HOME/projects/lab
+# RUN mkdir -p ~/packages/usr/bin
+# RUN mkdir -p ~/packages/usr/lib
+# RUN mkdir -p ~/packages/usr/opt
+# RUN mkdir -p software/mm
+# WORKDIR $HOME/projects/lab/software/mm
+# RUN git clone https://github.com/johnmeshreki/micro-manager.git
+# WORKDIR $HOME/projects/lab/software/mm/micromanager
+# RUN git submodule set-url mmCoreandDevices https://github.com/johnmeshreki/mmCoreandDevices.git
+# RUN git submodule update --init --recursive
+# RUN ./autogen.sh
+# RUN unset JAVA_HOME
+# RUN ./configure --prefix ~/prefix/usr/ --with-Freeimageplus=auto
+# # --with-java=/usr/lib/jvm/java
+# RUN mkdir ../3rdpartypublic; pushd ../3rdpartypublic
+# RUN svn checkout https:/valelab4.ucsf.edu/svn/3rdpartypublic/classext
+# RUN popd
+# RUN mae fetchdeps
+# RUN make -jN
+# RUN make install
+
+#---------------------------------------------------------------------
 #           set up working environment when logging in 
 #---------------------------------------------------------------------
 WORKDIR $HOME
