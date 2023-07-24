@@ -188,7 +188,6 @@ RUN sudo apt install -y libpcre3 libpcre3-dev
 # dependecies Micromanager
 RUN sudo apt install -y subversion build-essential autoconf-archive openjdk-8-jdk ant libboost-all-dev
 
-
 # very very last minute
 RUN sudo apt-get update
 RUN sudo apt-get install -y wget
@@ -199,7 +198,7 @@ RUN sudo apt-get install -y wget
 WORKDIR $HOME/projects/lab
 RUN wget https://downloads.sourceforge.net/swig/swig-3.0.12.tar.gz
 RUN tar -xzvf swig-3.0.12.tar.gz
-# RUN mkdir Shiver/build
+RUN rm swig-3.0.12.tar.gz
 WORKDIR $HOME/projects/lab/swig-3.0.12
 RUN ./configure --prefix=/usr \
 --without-clisp \
