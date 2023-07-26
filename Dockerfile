@@ -228,9 +228,9 @@ WORKDIR $HOME/projects/lab
 RUN git clone https://github.com/johnmeshreki/gphoto2.git
 WORKDIR $HOME/projects/lab/gphoto2
 RUN autoreconf -is
-RUN ./configure PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig${PKG_CONFIG_PATH+":${PKG_CONFIG_PATH}"}" --prefix="$HOME/.local"
-RUN make
-RUN make install
+RUN ./configure PKG_CONFIG_PATH="/usr/local/lib/pkgconfig${PKG_CONFIG_PATH+":${PKG_CONFIG_PATH}"}" --prefix="/usr/local"
+RUN make -j4
+RUN sudo make install
 
 #---------------------------------------------------------------------
 #                       Micromanager
